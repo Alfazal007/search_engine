@@ -18,6 +18,11 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+/*
+TODO::
+reenter into the queue
+*/
+
 func main() {
 	log.Info("Started the crawler application")
 	err := godotenv.Load()
