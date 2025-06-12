@@ -40,7 +40,7 @@ func GetUrlAndCrawl(rdb *redis.Client, number_of_queues int32, my_position int32
 		helpers.Assert(err == nil, fmt.Sprintf("Issue talking to redis bloom filters %v", err))
 		if !exists {
 			newUUID := uuid.New()
-			Crawl(url_to_crawl, c, newUUID, strconv.FormatInt(current_bloom_filter_name, 10))
+			new_urls_to_crawl := Crawl(url_to_crawl, c, newUUID, strconv.FormatInt(current_bloom_filter_name, 10))
 			rdb.BFAdd(context.Background(), fmt.Sprintf("%v", current_bloom_filter_name), url_to_crawl)
 			new_row_created, err := conn.CreateUrl(context.Background(), database.CreateUrlParams{
 				ID:            newUUID,
@@ -56,6 +56,7 @@ func GetUrlAndCrawl(rdb *redis.Client, number_of_queues int32, my_position int32
 					"row": new_row_created,
 				}).Info("Added a new row into the database")
 			}
+			add_to_queue(new_urls_to_crawl, rdb, number_of_queues)
 		} else {
 			log.WithFields(log.Fields{
 				"url": url_to_crawl,
