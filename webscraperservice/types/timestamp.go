@@ -3,6 +3,7 @@ package types
 import "sync"
 
 type TimeStamp struct {
-	Timestamp int64
-	Mutex     sync.RWMutex
+	Timestamp       int64
+	Mutex           sync.RWMutex
+	HasDataToUpload bool
 }

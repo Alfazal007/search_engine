@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"hash/fnv"
 	"net/url"
-	"webcrawler/helpers"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -13,7 +12,9 @@ import (
 func add_to_queue(new_urls_to_crawl []string, rdb *redis.Client, number_of_queues int32) {
 	for _, single_url := range new_urls_to_crawl {
 		url, err := url.Parse(single_url)
-		helpers.Assert(err == nil, fmt.Sprintf("Issue parsing the url %v", err))
+		if err != nil {
+			continue
+		}
 		queue_to_add_in := hashURLToRange(url.Hostname(), number_of_queues)
 		rdb.LPush(context.Background(), fmt.Sprintf("url_queue_%v", queue_to_add_in), url)
 	}

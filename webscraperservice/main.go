@@ -49,8 +49,9 @@ func main() {
 	log.Info("Starting to crawl the urls")
 	number_of_queues, my_position := helpers.GetServerData()
 	timestamp := types.TimeStamp{
-		Timestamp: time.Now().Unix(),
-		Mutex:     sync.RWMutex{},
+		Timestamp:       time.Now().Unix(),
+		Mutex:           sync.RWMutex{},
+		HasDataToUpload: false,
 	}
 	go createFolders(&timestamp)
 	crawl.GetUrlAndCrawl(rdb, number_of_queues, my_position, database_connection, &timestamp)
@@ -59,11 +60,19 @@ func main() {
 func createFolders(timestamp *types.TimeStamp) {
 	for {
 		timestamp.Mutex.Lock()
+		previous_timestamp := timestamp.Timestamp
 		timestamp.Timestamp = time.Now().Unix()
 		err := os.Mkdir(fmt.Sprintf("savedPages/%v", strconv.FormatInt(timestamp.Timestamp, 10)), 0755)
-		helpers.Assert(err == nil, fmt.Sprintf("Issue creating the folder, %v", err))
+		helpers.Assert(err == nil, fmt.Sprintf("Issue creating the save folder, %v", err))
+		needToUpload := timestamp.HasDataToUpload
+		if !needToUpload {
+			timestamp.HasDataToUpload = true
+		}
 		timestamp.Mutex.Unlock()
 		helpers.Assert(err == nil, "Issue creating the directory")
+		if needToUpload {
+			go helpers.UploadPreviousFolder(previous_timestamp)
+		}
 		time.Sleep(1 * time.Minute)
 	}
 }
