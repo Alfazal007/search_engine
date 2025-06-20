@@ -1,0 +1,21 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model urls {
+  id            String @id
+  url           String
+  lastCrawledAt BigInt
+}
+
+model crawl_timestamps {
+  crawledat  BigInt  @id
+  indexed    Boolean @default(false)
+  secure_url String
+}

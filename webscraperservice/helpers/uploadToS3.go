@@ -13,14 +13,15 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func UploadPreviousFolder(previous_timestamp int64) {
+func UploadPreviousFolder(previous_timestamp int64) string {
 	source_folder := fmt.Sprintf("savedPages/%v", previous_timestamp)
 	target_folder := fmt.Sprintf("uploadPages/%v.zip", previous_timestamp)
 	err := zipFolder(source_folder, target_folder)
 	Assert(err == nil, fmt.Sprintf("Issue creating the zip file, %v", err))
-	UploadZipToCloudinary(target_folder, previous_timestamp)
+	secure_url := UploadZipToCloudinary(target_folder, previous_timestamp)
 	deleteFolder(source_folder)
 	deleteZipFile(target_folder)
+	return secure_url
 }
 
 func zipFolder(source, target string) error {
@@ -79,7 +80,7 @@ func deleteZipFile(file_path string) {
 	Assert(err == nil, fmt.Sprintf("Issue deleting the file %v", err))
 }
 
-func UploadZipToCloudinary(zip_file_path string, timestamp int64) {
+func UploadZipToCloudinary(zip_file_path string, timestamp int64) string {
 	cld, err := cloudinary.NewFromParams(os.Getenv("CLOUDINARY_CLOUD_NAME"), os.Getenv("CLOUDINARY_API_KEY"), os.Getenv("CLOUDINARY_API_SECRET"))
 	Assert(err == nil, fmt.Sprintf("Failed to initialize cloudinary %v", err))
 	file, err := os.Open(zip_file_path)
@@ -88,9 +89,11 @@ func UploadZipToCloudinary(zip_file_path string, timestamp int64) {
 	uploadParams := uploader.UploadParams{
 		ResourceType: "raw",
 		PublicID:     fmt.Sprintf("scrapedPages/%v", timestamp),
+		Type:         "upload",
 	}
 	ctx := context.Background()
-	_, err = cld.Upload.Upload(ctx, file, uploadParams)
+	upload_result, err := cld.Upload.Upload(ctx, file, uploadParams)
 	Assert(err == nil, fmt.Sprintf("Upload failed %v", err))
 	log.Info("Upload successful!")
+	return upload_result.SecureURL
 }

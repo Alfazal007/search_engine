@@ -5,8 +5,16 @@
 package database
 
 import (
+	"database/sql"
+
 	"github.com/google/uuid"
 )
+
+type CrawlTimestamp struct {
+	Crawledat int64
+	Indexed   sql.NullBool
+	SecureUrl string
+}
 
 type Url struct {
 	ID            uuid.UUID

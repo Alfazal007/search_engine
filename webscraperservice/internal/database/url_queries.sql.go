@@ -11,6 +11,22 @@ import (
 	"github.com/google/uuid"
 )
 
+const createCrawlEntry = `-- name: CreateCrawlEntry :one
+insert into crawl_timestamps (crawledAt, secure_url) values ($1, $2) returning crawledat, indexed, secure_url
+`
+
+type CreateCrawlEntryParams struct {
+	Crawledat int64
+	SecureUrl string
+}
+
+func (q *Queries) CreateCrawlEntry(ctx context.Context, arg CreateCrawlEntryParams) (CrawlTimestamp, error) {
+	row := q.db.QueryRowContext(ctx, createCrawlEntry, arg.Crawledat, arg.SecureUrl)
+	var i CrawlTimestamp
+	err := row.Scan(&i.Crawledat, &i.Indexed, &i.SecureUrl)
+	return i, err
+}
+
 const createUrl = `-- name: CreateUrl :one
 insert into urls (id, url, lastCrawledAt) values ($1, $2, $3) returning id, url, lastcrawledat
 `

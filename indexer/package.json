@@ -1,0 +1,19 @@
+{
+  "name": "indexer",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest",
+    "prisma": "^6.10.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.10.0",
+    "axios": "^1.10.0",
+    "cloudinary": "^2.7.0",
+    "dotenv": "^16.5.0"
+  }
+}

@@ -1,0 +1,3 @@
+start a locally running redis(it should be supporting bloom filters) and a postgres instance
+run database migrations via goose
+start the go file via go run *.go or build and start the process

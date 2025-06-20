@@ -53,11 +53,11 @@ func main() {
 		Mutex:           sync.RWMutex{},
 		HasDataToUpload: false,
 	}
-	go createFolders(&timestamp)
+	go createFolders(&timestamp, database_connection)
 	crawl.GetUrlAndCrawl(rdb, number_of_queues, my_position, database_connection, &timestamp)
 }
 
-func createFolders(timestamp *types.TimeStamp) {
+func createFolders(timestamp *types.TimeStamp, database_connection *database.Queries) {
 	for {
 		timestamp.Mutex.Lock()
 		previous_timestamp := timestamp.Timestamp
@@ -71,7 +71,12 @@ func createFolders(timestamp *types.TimeStamp) {
 		timestamp.Mutex.Unlock()
 		helpers.Assert(err == nil, "Issue creating the directory")
 		if needToUpload {
-			go helpers.UploadPreviousFolder(previous_timestamp)
+			secure_url := helpers.UploadPreviousFolder(previous_timestamp)
+			// create the entry into the database for prev crawled thing and then fetch and update the cloudinary in the indexer for this
+			database_connection.CreateCrawlEntry(context.Background(), database.CreateCrawlEntryParams{
+				SecureUrl: secure_url,
+				Crawledat: previous_timestamp,
+			})
 		}
 		time.Sleep(1 * time.Minute)
 	}
