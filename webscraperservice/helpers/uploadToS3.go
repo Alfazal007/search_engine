@@ -2,6 +2,7 @@ package helpers
 
 import (
 	"archive/zip"
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -86,13 +87,19 @@ func UploadZipToCloudinary(zip_file_path string, timestamp int64) string {
 	file, err := os.Open(zip_file_path)
 	Assert(err == nil, fmt.Sprintf("Error opening file %v", err))
 	defer file.Close()
-	uploadParams := uploader.UploadParams{
-		ResourceType: "raw",
-		PublicID:     fmt.Sprintf("scrapedPages/%v", timestamp),
-		Type:         "upload",
+	fileBytes, err := io.ReadAll(file)
+	if err != nil {
+		Assert(err == nil, fmt.Sprintf("Failed to read file into memory: %v", err))
 	}
+	discardOriginalFileName := true
+	uploadParams := uploader.UploadParams{
+		ResourceType:            "raw",
+		PublicID:                fmt.Sprintf("scrapedPages/%v", timestamp),
+		DiscardOriginalFilename: &discardOriginalFileName,
+	}
+	fileReader := bytes.NewReader(fileBytes)
 	ctx := context.Background()
-	upload_result, err := cld.Upload.Upload(ctx, file, uploadParams)
+	upload_result, err := cld.Upload.Upload(ctx, fileReader, uploadParams)
 	Assert(err == nil, fmt.Sprintf("Upload failed %v", err))
 	log.Info("Upload successful!")
 	return upload_result.SecureURL

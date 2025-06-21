@@ -4,15 +4,12 @@ import { configDotenv } from "dotenv"
 import { downloadFromCloudinaryToFile } from "./downloadFile"
 configDotenv()
 
-// this is supposed to pull the data from the cloudinary unzip it and then index the data into the redisDB
 async function startServer() {
     cloudinary.config({
         api_key: process.env.CLOUDINARY_API_KEY,
         api_secret: process.env.CLOUDINARY_API_SECRET,
         cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-        secure: true
     })
-    console.log(cloudinary.config().api_secret)
     const prisma = new PrismaClient()
 
     setInterval(async () => {
@@ -27,7 +24,7 @@ async function startServer() {
                 }
             })
             if (lastPushedTimestamp) {
-                const resource = await cloudinary.api.resource(`scrapedPages/${lastPushedTimestamp.crawledat}.zip`, {
+                const resource = await cloudinary.api.resource(`scrapedPages/${lastPushedTimestamp.crawledat}`, {
                     resource_type: "raw",
                 })
                 const url = resource.secure_url
