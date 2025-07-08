@@ -29,6 +29,14 @@ func Crawl(url string, base_colly *colly.Collector, id uuid.UUID, timestamp_fold
 		} else {
 			log.Info("HTML saved to", filename)
 		}
+		file, err := os.OpenFile(filename, os.O_APPEND|os.O_WRONLY, 0644)
+		if err != nil {
+			log.Error("Error opening the file in append only mode: ", err)
+		}
+		defer file.Close()
+		if _, err := file.WriteString("\n" + url); err != nil {
+			log.Error("Error opening the file in append only mode: ", err)
+		}
 	})
 
 	err := c.Visit(url)

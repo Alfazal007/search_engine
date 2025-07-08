@@ -1,7 +1,12 @@
 import { v2 as cloudinary } from "cloudinary"
-import { PrismaClient } from "./generated/prisma"
 import { configDotenv } from "dotenv"
 import { downloadFromCloudinaryToFile } from "./downloadFile"
+import { readZipFileAndIndex } from "./readZipFile"
+import { getLastPushedZipFileFromDatabase } from "./helpers/getLastPusedTimeStampData"
+import fs from "fs"
+import path from "path"
+import { prisma } from "./prisma"
+
 configDotenv()
 
 async function startServer() {
@@ -10,19 +15,15 @@ async function startServer() {
         api_secret: process.env.CLOUDINARY_API_SECRET,
         cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     })
-    const prisma = new PrismaClient()
 
+    let completed = true
     setInterval(async () => {
+        if (!completed) {
+            return
+        }
         console.log("Pulling data from cloudinary")
         try {
-            const lastPushedTimestamp = await prisma.crawl_timestamps.findFirst({
-                where: {
-                    indexed: false
-                },
-                orderBy: {
-                    crawledat: "asc"
-                }
-            })
+            const lastPushedTimestamp = await getLastPushedZipFileFromDatabase()
             if (lastPushedTimestamp) {
                 const resource = await cloudinary.api.resource(`scrapedPages/${lastPushedTimestamp.crawledat}`, {
                     resource_type: "raw",
@@ -30,6 +31,8 @@ async function startServer() {
                 const url = resource.secure_url
                 console.log({ url })
                 await downloadFromCloudinaryToFile({ url, outputPath: `./zipFile/${lastPushedTimestamp.crawledat}.zip` })
+                await readZipFileAndIndex(`./zipFile/${lastPushedTimestamp.crawledat}.zip`)
+                fs.unlinkSync(path.join(__dirname, `zipFile`, `${lastPushedTimestamp.crawledat}.zip`))
                 await prisma.crawl_timestamps.update({
                     where: {
                         crawledat: lastPushedTimestamp.crawledat
@@ -41,9 +44,10 @@ async function startServer() {
             }
         } catch (error) {
             console.log({ error })
+        } finally {
+            completed = true
         }
     }, 10000)
 }
 
 startServer()
-
