@@ -6,12 +6,12 @@ import (
 	"log"
 	"os"
 
+	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
+	"github.com/redis/go-redis/v9"
 	"pageRanker/helpers"
 	"pageRanker/internal/database"
 	"time"
-
-	"github.com/joho/godotenv"
-	"github.com/redis/go-redis/v9"
 )
 
 // this means that 85 percent it will be crawling same page links else completely random links
@@ -45,4 +45,3 @@ func main() {
 	url := helpers.GetRandomUrl(database_connection, context)
 	helpers.CrawlPage(url.Url, DAMPING_FACTOR, context, rdb, database_connection)
 }
-

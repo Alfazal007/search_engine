@@ -31,12 +31,14 @@ func CrawlPage(url string, damping_factor int32, context context.Context, redis 
 			resp, err := http.Get(url)
 			if err != nil {
 				url = GetRandomUrl(conn, context).Url
+				continue
 			}
 
 			doc, err := goquery.NewDocumentFromReader(resp.Body)
 			if err != nil {
 				url = GetRandomUrl(conn, context).Url
 				resp.Body.Close()
+				continue
 			}
 
 			links := []string{}
@@ -63,15 +65,14 @@ func CrawlPage(url string, damping_factor int32, context context.Context, redis 
 func updatePageRank(url string, redis *redis.Client, context context.Context) {
 	prevRank := redis.Get(context, fmt.Sprintf("PAGERANK:%v", url))
 	new_rank := 1
-	if prevRank != nil {
+	if prevRank != nil && prevRank.Val() != "" {
 		new_rank_from_redis, err := strconv.Atoi(prevRank.Val())
 		if err != nil {
 			log.Fatal("Issue getting previous page rank from redis")
 		}
-		new_rank = new_rank_from_redis
+		new_rank = new_rank_from_redis + 1
 	}
-	redis.Set(context, url, new_rank, time.Hour*1)
-	fmt.Println(new_rank)
+	redis.Set(context, fmt.Sprintf("PAGERANK:%v", url), new_rank, time.Hour*1)
 }
 
 func getRandomNumber(damping_factor int32) RandomOrNot {
