@@ -108,6 +108,17 @@ class RedisManager {
             console.error(err)
         }
     }
+
+    async setTotalTokensInAUrl(url: string, tokenCount: number): Promise<void> {
+        try {
+            if (!this.redisConnection) {
+                process.exit("No redis connection established")
+            }
+            await this.redisConnection.set("COUNTOFTOKENSINADOC:" + url, tokenCount.toString())
+        } catch (err) {
+            console.error(err)
+        }
+    }
 }
 
 export {

@@ -1,7 +1,6 @@
 import unzipper from "unzipper"
 import * as cheerio from "cheerio"
 import { RedisManager } from "./redis"
-import { redis } from "bun"
 
 async function readZipFileAndIndex(path: string) {
     let files = await unzipper.Open.file(path)
@@ -13,6 +12,7 @@ async function readZipFileAndIndex(path: string) {
         const $ = cheerio.load(htmlContent)
         const bodyContent = $('body').text().trim()
         const tokens = extractTokens(bodyContent)
+        const totalTokensInDoc = tokens.length
         const newTokenMap = new Map<string, number>()
         tokens.forEach((token) => {
             let prev = newTokenMap.get(token) || 0
@@ -20,6 +20,7 @@ async function readZipFileAndIndex(path: string) {
         })
         // ideally here there would be more of redis stuff and based on domain it should go to that shard or just use dynamoDB
         const redisConnection = await RedisManager.getInstance()
+        await redisConnection.setTotalTokensInAUrl(urlOfSite, totalTokensInDoc)
         newTokenMap.forEach(async (occurences, token) => {
             const preScanned = await redisConnection.checkTokenPreExistsInUrlScannedEarlier(token, urlOfSite)
             if (preScanned) {

@@ -37,6 +37,7 @@ func GetUrlAndCrawl(rdb *redis.Client, number_of_queues int32, my_position int32
 			"url": url_to_crawl,
 		}).Info("Currently crawling")
 		exists, err := rdb.BFExists(context.Background(), fmt.Sprintf("%v", current_bloom_filter_name), url_to_crawl).Result()
+		rdb.PFAdd(context.Background(), "TOTALURLCOUNT", url_to_crawl)
 		helpers.Assert(err == nil, fmt.Sprintf("Issue talking to redis bloom filters %v", err))
 		if !exists {
 			newUUID := uuid.New()
